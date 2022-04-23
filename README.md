@@ -1,2 +1,0 @@
-# gogorequest
-Golang - Spider engine

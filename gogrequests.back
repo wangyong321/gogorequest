@@ -1,0 +1,210 @@
+package gogrequest
+
+import (
+	"encoding/json"
+	"golang.org/x/net/http2"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+)
+
+func NewSpider() *Spider {
+	s := Spider{}
+	s.SetLimiter(1)
+	s.InitTransport()
+	return &s
+}
+
+type Spider struct {
+	limiter          chan bool
+	transport        *http.Transport
+	chanRequest      chan *Request
+	chanRetryRequest chan *Request
+	ChanResponses    chan *Response
+}
+
+// 重置爬虫并发数限制
+func (s *Spider) SetLimiter(num int) {
+	var limiter = make(chan bool, num)
+	s.limiter = limiter
+	var chanRequest = make(chan *Request, num)
+	s.chanRequest = chanRequest
+	var chanRetryRequest = make(chan *Request, num)
+	s.chanRetryRequest = chanRetryRequest
+	var chanResponses = make(chan *Response, num)
+	s.ChanResponses = chanResponses
+}
+
+// 初始化transport
+func (s *Spider) InitTransport() {
+	transport := http.Transport{
+		DialContext:           (&net.Dialer{}).DialContext,
+		DisableKeepAlives:     false,
+		MaxIdleConns:          100,              // 最大空闲连接数
+		IdleConnTimeout:       60 * time.Second, // 空闲连接超时
+		TLSHandshakeTimeout:   60 * time.Second, // TLS 握手超时
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	s.transport = &transport
+}
+
+// 重置transport
+func (s *Spider) SetTransport(transport *http.Transport) {
+	s.transport = transport
+}
+
+// 启动http2.0
+func (s *Spider) EnableHTTP2() error {
+	err := http2.ConfigureTransport(s.transport)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 下载
+func (s *Spider) Visit(method string, targetUrl string, headers map[string]string, body interface{}, timeout time.Duration, proxies string, meta map[string]interface{}) {
+	request := Request{
+		URL:         targetUrl,
+		Method:      method,
+		Headers:     headers,
+		Body:        body,
+		Spider:      s,
+		Proxy:       proxies,
+		Timeout:     timeout * time.Second,
+		Meta:        meta,
+		RetryNumber: 0,
+	}
+	s.chanRequest <- &request
+	go s.get()
+}
+
+// 重试下载
+func (s *Spider) RetryVisit(method string, targetUrl string, headers map[string]string, body interface{}, timeout time.Duration, proxies string, meta map[string]interface{}, retryNumber int64) {
+	request := Request{
+		URL:         targetUrl,
+		Method:      method,
+		Headers:     headers,
+		Body:        body,
+		Spider:      s,
+		Proxy:       proxies,
+		Timeout:     timeout * time.Second,
+		Meta:        meta,
+		RetryNumber: retryNumber + 1,
+	}
+	s.chanRetryRequest <- &request
+	go s.get()
+}
+
+func (s *Spider) get() {
+	s.limiter <- true
+	var requestBody *Request
+	// 获取请求体
+	if len(s.chanRetryRequest) != 0 {
+		requestBody = <-s.chanRetryRequest
+	} else {
+		requestBody = <-s.chanRequest
+	}
+
+	client := http.Client{}
+	defer client.CloseIdleConnections()
+	// 设置代理和Transport
+	err := s.addProxyAndTransport(&client, requestBody.Proxy, requestBody.Timeout)
+	if err != nil {
+		s.onError(nil, err, requestBody)
+		return
+	}
+
+	// 如果body不等于nil, 则生成reader类型body
+	var payload *strings.Reader
+	if requestBody.Body != nil {
+		bodyJson, err := json.Marshal(requestBody.Body)
+		if err != nil {
+			s.onError(nil, err, requestBody)
+			return
+		}
+		payload = strings.NewReader(string(bodyJson))
+	} else {
+		payload = nil
+	}
+
+	// 包装请求体
+	var req *http.Request
+	if payload == nil {
+		req, err = http.NewRequest(requestBody.Method, requestBody.URL, nil)
+		if err != nil {
+			s.onError(nil, err, requestBody)
+			return
+		}
+	} else {
+		req, err = http.NewRequest(requestBody.Method, requestBody.URL, payload)
+		if err != nil {
+			s.onError(nil, err, requestBody)
+			return
+		}
+	}
+
+	// 设置请求头
+	for h, hv := range requestBody.Headers {
+		req.Header.Add(h, hv)
+	}
+	// 执行请求
+	res, err := client.Do(req)
+	if err != nil {
+		s.onError(res, err, requestBody)
+		return
+	}
+	defer res.Body.Close()
+	// 处理返回数据
+	s.onResponse(res, requestBody)
+	return
+}
+
+func (s *Spider) addProxyAndTransport(client *http.Client, proxies string, timeout time.Duration) error {
+	if proxies != "" {
+		proxyUrl, err := url.Parse(proxies)
+		if err != nil {
+			return err
+		}
+		s.transport.Proxy = http.ProxyURL(proxyUrl)
+	}
+	client.Transport = s.transport
+	client.Timeout = timeout * time.Second
+	return nil
+}
+
+func (s *Spider) onError(res *http.Response, err error, requestBody *Request) {
+	var response Response
+	if res != nil {
+		response.StatusCode = res.StatusCode
+	} else {
+		response.StatusCode = 10000
+	}
+	response.Status = false
+	response.Error = err
+	response.Request = requestBody
+	response.Response = res
+	s.ChanResponses <- &response
+	<-s.limiter
+}
+
+func (s *Spider) onResponse(res *http.Response, requestBody *Request) {
+	var response Response
+	// 读取响应内容
+	text, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		s.onError(res, err, requestBody)
+		return
+	}
+	response.Status = true
+	response.Error = nil
+	response.Request = requestBody
+	response.Response = res
+	response.StatusCode = res.StatusCode
+	response.Text = string(text)
+	s.ChanResponses <- &response
+	<-s.limiter
+}
