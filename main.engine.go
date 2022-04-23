@@ -1,4 +1,4 @@
-package gogrequest
+package gogogrequest
 
 import (
 	"golang.org/x/net/http2"
