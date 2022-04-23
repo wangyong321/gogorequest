@@ -1,5 +1,10 @@
 ## 使用方法
 
+### 安装
+```shell
+go get -u github.com/wangyong321/gogorequest
+```
+
 ### 同步下载引擎
 ```go
 package main
@@ -15,6 +20,8 @@ func main() {
 	fmt.Println(resp.Text)
 }
 ```
+
+
 
 ### 流式并发请求
 ```go
@@ -71,6 +78,42 @@ func main() {
 		fmt.Printf("%d. %v\n", index+1, resp.Text)
 	}
 }
+```
+
+### 请求重试
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/wangyong321/gogorequest"
+)
+
+func main() {
+	// 最大重试次数
+	maxRetryCount := 3
+	s := gogogrequest.NewAsyncEngine()
+	go func() {
+		for {
+			s.Visit("GET", "https://httpbin.org/get", nil, nil, 10, "", nil)
+		}
+	}()
+	for {
+		resp := <-s.ChanResponses
+		if resp.Error != nil {
+			if resp.Request.RetryNumber == int64(maxRetryCount) {
+				// 如果当前重试次数等于最大重试次数要求，则放弃重试
+				continue
+			} else {
+				// 开始重试重试请求
+				resp.Request.Retry()
+				continue
+			}
+		}
+		fmt.Println(resp.Text)
+	}
+}
+
 ```
 
 ### 发送飞书消息
