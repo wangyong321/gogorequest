@@ -3,7 +3,7 @@
 ### 安装
 
 ```shell
-go get -u github.com/wangyong321/gogorequest
+go get -u github.com/wangyong321/gogorequest@V1.1.0
 ```
 
 ### 同步下载引擎
