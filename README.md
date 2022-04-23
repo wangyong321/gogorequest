@@ -1,11 +1,13 @@
 ## 使用方法
 
 ### 安装
+
 ```shell
 go get -u github.com/wangyong321/gogorequest
 ```
 
 ### 同步下载引擎
+
 ```go
 package main
 
@@ -21,9 +23,8 @@ func main() {
 }
 ```
 
-
-
 ### 流式并发请求
+
 ```go
 package main
 
@@ -49,6 +50,7 @@ func main() {
 ```
 
 ### 批量并发请求
+
 ```go
 package main
 
@@ -81,6 +83,7 @@ func main() {
 ```
 
 ### 请求重试
+
 ```go
 package main
 
@@ -117,6 +120,7 @@ func main() {
 ```
 
 ### 发送飞书消息
+
 ```go
 package main
 
@@ -142,6 +146,7 @@ func main() {
 ```
 
 ### 发送邮件消息
+
 ```go
 package main
 
