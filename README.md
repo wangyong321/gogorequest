@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	s := gogogrequest.NewSyncEngine()
+	s := gogorequest.NewSyncEngine()
 	resp := s.Visit("GET", "https://httpbin.org/get", nil, nil, 10, "", nil)
 	fmt.Println(resp.Text)
 }
@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-	s := gogogrequest.NewAsyncEngine()
+	s := gogorequest.NewAsyncEngine()
 	s.SetLimiter(10)
 	go func() {
 		for {
@@ -60,8 +60,8 @@ import (
 )
 
 func main() {
-	s := gogogrequest.NewBatchAsyncEngine()
-	targetDatas := []gogogrequest.BatchAsyncEngineRequestBody{}
+	s := gogorequest.NewBatchAsyncEngine()
+	targetDatas := []gogorequest.BatchAsyncEngineRequestBody{}
 	// 批量生成任务
 	for i := 1; i <= 5; i++ {
 		var request gogogrequest.BatchAsyncEngineRequestBody
@@ -95,7 +95,7 @@ import (
 func main() {
 	// 最大重试次数
 	maxRetryCount := 3
-	s := gogogrequest.NewAsyncEngine()
+	s := gogorequest.NewAsyncEngine()
 	go func() {
 		for {
 			s.Visit("GET", "https://httpbin.org/get", nil, nil, 10, "", nil)
@@ -130,7 +130,7 @@ import (
 )
 
 func main() {
-	s := gogogrequest.NewBatchAsyncEngine()                    // 任意引擎
+	s := gogorequest.NewBatchAsyncEngine()                    // 任意引擎
 	api := "https://open.feishu.cn/open-apis/bot/v2/hook/demo" // 飞书机器人api
 	token := "demo"                                            // 飞书机器人api请求token
 	msg := "本条消息由go语言测试程序发出"                                   // 需要飞书机器人发送的消息
@@ -155,7 +155,7 @@ import (
 )
 
 func main() {
-	s := gogogrequest.NewBatchAsyncEngine()                                  // 任意引擎
+	s := gogorequest.NewBatchAsyncEngine()                                  // 任意引擎
 	fromEmail := "demo@163.com"                                              // 发送邮件的邮箱
 	fromPassword := "HDIDWUWTAJUIJPMW"                                       // 发送邮件的邮箱密码
 	fromSmtp := "smtp.163.com:25"                                            // 发送邮件的smtp

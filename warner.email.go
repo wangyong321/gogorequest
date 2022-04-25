@@ -1,4 +1,4 @@
-package gogogrequest
+package gogorequest
 
 import (
 	"crypto/sha1"

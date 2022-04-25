@@ -1,4 +1,4 @@
-package gogogrequest
+package gogorequest
 
 import (
 	"time"
