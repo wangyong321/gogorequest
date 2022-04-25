@@ -64,7 +64,7 @@ func main() {
 	targetDatas := []gogorequest.BatchAsyncEngineRequestBody{}
 	// 批量生成任务
 	for i := 1; i <= 5; i++ {
-		var request gogogrequest.BatchAsyncEngineRequestBody
+		var request gogorequest.BatchAsyncEngineRequestBody
 		request.URL = "https://httpbin.org/get"
 		request.Method = "GET"
 		request.Headers = nil
@@ -117,6 +117,62 @@ func main() {
 	}
 }
 
+```
+
+### 开启HTTP2.0模式
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/wangyong321/gogorequest"
+)
+
+func main() {
+	s := gogorequest.NewSyncEngine()
+	s.EnableHTTP2()
+	resp := s.Visit("GET", "https://httpbin.org/get", nil, nil, 10, "", nil)
+	fmt.Println(resp.Text)
+}
+```
+
+### 挂载证书请求
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/wangyong321/gogorequest"
+	"net"
+	"net/http"
+	"time"
+)
+
+func main() {
+	s := gogorequest.NewSyncEngine()
+	pemPath := "ca.pem"
+	keyPath := "ca.key"
+	// 请求器配置TLS证书
+	tlsConfig, err := s.ReadCrt(pemPath, keyPath)
+	if err != nil {
+		panic(err)
+	}
+	// Transport指定TLS证书
+	transport := http.Transport{
+		DialContext:           (&net.Dialer{}).DialContext,
+		DisableKeepAlives:     false,
+		MaxIdleConns:          100,              // 最大空闲连接数
+		IdleConnTimeout:       60 * time.Second, // 空闲连接超时
+		TLSHandshakeTimeout:   60 * time.Second, // TLS 握手超时
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig:       tlsConfig, // 加载TLS
+	}
+	// 重置请求器transport
+	s.SetTransport(&transport)
+	// 请求
+	resp := s.Visit("GET", "https://httpbin.org/get", nil, nil, 10, "", nil)
+	fmt.Println(resp.Text)
+}
 ```
 
 ### 发送飞书消息

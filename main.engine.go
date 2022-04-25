@@ -1,6 +1,7 @@
 package gogorequest
 
 import (
+	"crypto/tls"
 	"golang.org/x/net/http2"
 	"net"
 	"net/http"
@@ -27,6 +28,18 @@ func (this *mainEngine) initTransport() {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 	this.transport = &transport
+}
+
+// 读取证书
+func ReadCrt(cerPath string, keyPath string) (*tls.Config, error) {
+	cliCrt, err := tls.LoadX509KeyPair(cerPath, keyPath)
+	if err != nil {
+		return nil, err
+	}
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{cliCrt},
+	}
+	return tlsConfig, nil
 }
 
 // 重置自定义transport
