@@ -31,7 +31,7 @@ func (this *mainEngine) initTransport() {
 }
 
 // 读取证书
-func ReadCrt(cerPath string, keyPath string) (*tls.Config, error) {
+func (this *mainEngine) ReadCrt(cerPath string, keyPath string) (*tls.Config, error) {
 	cliCrt, err := tls.LoadX509KeyPair(cerPath, keyPath)
 	if err != nil {
 		return nil, err
