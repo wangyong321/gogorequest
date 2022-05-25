@@ -60,7 +60,7 @@ func (this *SyncEngine) get(request *syncEngineRequestBody) *SyncEngineResponse 
 	if request.Body != nil {
 		requestBody, isString := request.Body.(string)
 		if !isString {
-			bodyJson, marshalErr := json.Marshal(requestBody)
+			bodyJson, marshalErr := json.Marshal(request.Body)
 			if marshalErr != nil {
 				return this.onError(nil, marshalErr, request, request.startTime, time.Now(), time.Now().Sub(request.startTime).Seconds())
 			}
