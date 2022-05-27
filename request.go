@@ -40,6 +40,19 @@ func (this *asyncEngineRequestBody) Retry() {
 	this.Spider.retryVisit(this.Method, this.URL, this.Headers, this.Body, this.Timeout, this.Proxy, this.Meta, this.RetryNumber, this.startTime)
 }
 
+// 文件下载引擎请求体
+type fileEngineRequestBody struct {
+	URL       string
+	Headers   map[string]string
+	Method    string
+	Body      interface{}
+	Spider    *FileEngine
+	Proxy     string
+	Timeout   time.Duration
+	FilePath  string
+	startTime time.Time
+}
+
 // 批量异步请求体[引擎自用]
 type batchAsyncEngineRequestBody struct {
 	URL       string

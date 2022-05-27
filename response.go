@@ -18,6 +18,18 @@ type SyncEngineResponse struct {
 	ConsumeTime float64
 }
 
+// 文件下载引擎响应体
+type FileEngineResponse struct {
+	Status      bool
+	Error       error
+	Text        string
+	Request     *fileEngineRequestBody
+	StatusCode  int
+	StartTime   time.Time
+	EndTime     time.Time
+	ConsumeTime float64
+}
+
 // 异步引擎响应体
 type AsyncEngineResponse struct {
 	Status      bool
