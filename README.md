@@ -82,6 +82,36 @@ func main() {
 }
 ```
 
+### 流式下载文件
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/wangyong321/gogorequest"
+)
+
+func main() {
+	s := gogorequest.NewFileEngine()
+	targetUrl := "https://ip3875670905.mobgslb.tbcache.com/fs08/2022/05/06/11/109_593a72f6ef92b3220c052a744d11dc08.apk?yingid=wdj_web&fname=%E6%A2%A6%E5%B9%BB%E8%A5%BF%E6%B8%B8&productid=2011&pos=wdj_web%2Fdetail_normal_dl%2F0&appid=6602792&packageid=100724749&apprd=6602792&iconUrl=http%3A%2F%2Fandroid-artworks.25pp.com%2Ffs08%2F2022%2F05%2F07%2F5%2F109_61dd3fd76244facbb759fb2682b0c196_con.png&pkg=com.netease.my.uc&did=d16f06fab6bce8562f398fb0899b4790&vcode=13600&md5=aa5fc49fd2f40addb899b51e772841f2&ali_redirect_domain=alissl.ucdl.pp.uc.cn&ali_redirect_ex_ftag=a2101f161c398cbf3a62935698fddb4147583998c6c0062b&ali_redirect_ex_tmining_ts=1653660871&ali_redirect_ex_tmining_expire=3600&ali_redirect_ex_hot=100"
+	headers := map[string]string{
+		"Upgrade-Insecure-Requests": "1",
+		"User-Agent":                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36",
+		"Accept":                    "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+		"Accept-Language":           "zh-CN,zh;q=0.9",
+	}
+	resp := s.Visit("GET", targetUrl, headers, nil, -1, "", fmt.Sprintf("梦幻西游.pkg"))
+	if resp.Error != nil {
+		panic(resp.Error)
+	}
+	if resp.StatusCode != 200 {
+		fmt.Println(resp.StatusCode)
+		return
+	}
+	fmt.Println(resp.Text)
+}
+```
+
 ### 请求重试
 
 ```go
