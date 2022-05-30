@@ -94,6 +94,13 @@ func (this *FileEngine) get(request *fileEngineRequestBody) *FileEngineResponse 
 
 	// 执行请求
 	res, doErr := client.Do(req)
+	endTime := time.Now()
+	consumeTime := endTime.Sub(request.startTime).Seconds()
+	if doErr != nil {
+		return this.onError(res, doErr, request, request.startTime, endTime, consumeTime)
+	}
+	defer res.Body.Close()
+
 	counter := &writeCounter{}
 	file, openFileErr := os.OpenFile(request.FilePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if openFileErr != nil {
@@ -105,12 +112,6 @@ func (this *FileEngine) get(request *fileEngineRequestBody) *FileEngineResponse 
 		return this.onError(nil, copyErr, request, request.startTime, time.Now(), time.Now().Sub(request.startTime).Seconds())
 	}
 
-	endTime := time.Now()
-	consumeTime := endTime.Sub(request.startTime).Seconds()
-	if doErr != nil {
-		return this.onError(res, doErr, request, request.startTime, endTime, consumeTime)
-	}
-	defer res.Body.Close()
 	// 处理返回数据
 	return this.onResponse(res, request, request.startTime, endTime, consumeTime)
 }
